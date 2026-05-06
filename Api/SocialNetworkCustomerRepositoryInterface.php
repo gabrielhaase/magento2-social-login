@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,26 +26,15 @@
 
 namespace Techyouknow\SocialLogin\Api;
 
+use Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer;
 
 interface SocialNetworkCustomerRepositoryInterface
 {
+    public function getById(int $id): SocialNetworkCustomer;
 
-    /**
-     * @param $id
-     * @return \Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer
-     */
-    public function getById($id);
+    public function socialNetworkCustomerExists(array $userProfile, string $type): int;
 
-    /**
-     * @param \Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer $socialNetworkCustomer
-     * @return mixed
-     */
-    public function save(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer $socialNetworkCustomer);
+    public function save(SocialNetworkCustomer $socialNetworkCustomer): SocialNetworkCustomer;
 
-    /**
-     * @param \Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer $socialNetworkCustomer
-     * @return mixed
-     */
-    public function delete(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer $socialNetworkCustomer);
-
+    public function delete(SocialNetworkCustomer $socialNetworkCustomer): SocialNetworkCustomer;
 }

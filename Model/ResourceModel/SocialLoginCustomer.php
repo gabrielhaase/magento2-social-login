@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,16 +26,15 @@
 
 namespace Techyouknow\SocialLogin\Model\ResourceModel;
 
+use Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer;
 
 class SocialLoginCustomer extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 {
-
-    protected function _construct()
+    protected function _construct(): void
     {
         $this->_init(
-            \Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::TABLE_NAME,
-            \Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::ENTITY_ID
+            SocialNetworkCustomer::TABLE_NAME,
+            SocialNetworkCustomer::ENTITY_ID
         );
-
     }
 }

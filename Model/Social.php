@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,121 +26,78 @@
 
 namespace Techyouknow\SocialLogin\Model;
 
-
-use Magento\Framework\App\ObjectManager;
 use Magento\Customer\Model\EmailNotificationInterface;
-use Magento\Reward\Model\RewardFactory;
-use Magento\Reward\Helper\Data as RewardData;
 use Magento\Customer\Model\CustomerRegistry;
+use Magento\Reward\Helper\Data as RewardData;
+use Magento\Reward\Model\RewardFactory;
 
 class Social extends \Magento\Framework\Model\AbstractModel
 {
-
-    private $socialHelper;
-    private $customerFactory;
-    private $customerRepository;
-    private $storeManager;
-    private $cookieMetadataFactory;
-    private $cookieMetadataManager;
-    private $session;
-    private $customerModelFactory;
-    private $accountManagement;
-    private $random;
-    private $socialLoginCustomerRepository;
-    private $socialNetworkCustomer;
-    private $dateTime;
-    protected $emailNotificationInterface;
-    protected $rewardFactory;
-    protected $rewardData;
-    protected $_logger;
-    private $customerRegistry;
+    protected EmailNotificationInterface $emailNotificationInterface;
+    protected RewardFactory $rewardFactory;
+    protected RewardData $rewardData;
+    protected \Psr\Log\LoggerInterface $_logger;
 
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Techyouknow\SocialLogin\Helper\Social $socialHelper,
-        \Magento\Customer\Api\Data\CustomerInterfaceFactory $customerFactory,
-        \Magento\Customer\Model\CustomerFactory $customerModelFactory,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory $cookieMetadataFactory,
-        \Magento\Framework\Stdlib\Cookie\PhpCookieManager $cookieMetadataManager,
-        \Magento\Customer\Model\Session $session,
-        \Magento\Customer\Model\AccountManagement $accountManagement,
-        \Magento\Framework\Math\Random $random,
-        \Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomerFactory $socialNetworkCustomer,
-        \Techyouknow\SocialLogin\Model\Repository\SocialLoginCustomerRepository $socialLoginCustomerRepository,
-        \Magento\Framework\Stdlib\DateTime\DateTime $dateTime,
+        private readonly \Techyouknow\SocialLogin\Helper\Social $socialHelper,
+        private readonly \Magento\Customer\Api\Data\CustomerInterfaceFactory $customerFactory,
+        private readonly \Magento\Customer\Model\CustomerFactory $customerModelFactory,
+        private readonly \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
+        private readonly \Magento\Store\Model\StoreManagerInterface $storeManager,
+        private readonly \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory $cookieMetadataFactory,
+        private readonly \Magento\Framework\Stdlib\Cookie\PhpCookieManager $cookieMetadataManager,
+        private readonly \Magento\Customer\Model\Session $session,
+        private readonly \Magento\Customer\Model\AccountManagement $accountManagement,
+        private readonly \Magento\Framework\Math\Random $random,
+        private readonly \Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomerFactory $socialNetworkCustomer,
+        private readonly \Techyouknow\SocialLogin\Model\Repository\SocialLoginCustomerRepository $socialLoginCustomerRepository,
         EmailNotificationInterface $emailNotificationInterface,
         RewardFactory $rewardFactory,
         RewardData $rewardData,
         \Psr\Log\LoggerInterface $logger,
-        CustomerRegistry $customerRegistry,
+        private readonly CustomerRegistry $customerRegistry,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
-    )
-    {
+    ) {
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
-        $this->socialHelper = $socialHelper;
-        $this->customerFactory = $customerFactory;
-        $this->customerRepository = $customerRepository;
-        $this->storeManager = $storeManager;
-        $this->cookieMetadataFactory = $cookieMetadataFactory;
-        $this->cookieMetadataManager = $cookieMetadataManager;
-        $this->session = $session;
-        $this->customerModelFactory = $customerModelFactory;
-        $this->accountManagement = $accountManagement;
-        $this->random = $random;
-        $this->socialLoginCustomerRepository = $socialLoginCustomerRepository;
-        $this->socialNetworkCustomer = $socialNetworkCustomer;
-        $this->dateTime = $dateTime;
         $this->emailNotificationInterface = $emailNotificationInterface;
         $this->rewardFactory = $rewardFactory;
         $this->rewardData = $rewardData;
         $this->_logger = $logger;
-        $this->customerRegistry = $customerRegistry;
     }
 
-    /**
-     * @param $adapterId
-     * @return \Hybridauth\User\Profile
-     * @throws \Hybridauth\Exception\InvalidArgumentException
-     * @throws \Hybridauth\Exception\UnexpectedValueException
-     */
-    public function getSocialUserProfile($adapterId) {
+    public function getSocialUserProfile(string $adapterId): array
+    {
         $adapterName = $this->socialHelper->getSocialNetwork($adapterId);
         $adaptersConfig = $this->socialHelper->getHybridauthConfig($adapterId);
 
         $hybridauth = new \Hybridauth\Hybridauth($adaptersConfig);
-
-        // Attempt to authenticate the user
         $adapter = $hybridauth->authenticate($adapterName);
-
-        // Retrieve the user's profile
         $userProfile = $adapter->getUserProfile();
-
-        // Disconnect the adapter (log out)
         $adapter->disconnect();
 
         return $this->prepareUserProfile($userProfile, $adapterId);
     }
 
-    public function prepareUserProfile($userProfile, $type)
+    public function prepareUserProfile(object $userProfile, string $type): array
     {
-        $name = explode(' ', $userProfile->displayName ?: __('New User'));
+        $name = explode(' ', (string) ($userProfile->displayName ?: __('New User')));
 
         return [
-            'email' => $userProfile->email ?: $userProfile->identifier . '@' . strtolower($type) . '.com',
-            'firstname' => $userProfile->firstName ?: (array_shift($name) ?: $userProfile->identifier),
-            'lastname' => $userProfile->lastName ?: (array_shift($name) ?: $userProfile->identifier),
+            'email'      => $userProfile->email ?: $userProfile->identifier . '@' . strtolower($type) . '.com',
+            'firstname'  => $userProfile->firstName ?: (array_shift($name) ?: $userProfile->identifier),
+            'lastname'   => $userProfile->lastName ?: (array_shift($name) ?: $userProfile->identifier),
             'identifier' => $userProfile->identifier,
-            'type' => $type,
-            'password' => isset($userProfile->password) ? $userProfile->password : null
+            'type'       => $type,
+            'password'   => $userProfile->password ?? null,
         ];
     }
 
-    public function createCustomerAccount($userProfile, $type) {
+    public function createCustomerAccount(array $userProfile, string $type): \Magento\Customer\Model\Customer
+    {
         $store = $this->storeManager->getStore();
 
         $customer = $this->customerFactory->create();
@@ -154,95 +112,58 @@ class Social extends \Magento\Framework\Model\AbstractModel
         $customer = $this->customerRepository->save($customer);
         $this->createSocialLoginCustomer($userProfile, $type, $customer->getId());
 
-        // Update rp_token & rk_token_created_at columns
-        $newPasswordToken  = $this->random->getUniqueHash();
+        $newPasswordToken = $this->random->getUniqueHash();
         $this->accountManagement->changeResetPasswordLinkToken($customer, $newPasswordToken);
         $this->emailNotificationInterface->newAccount(
             $customer,
             EmailNotificationInterface::NEW_ACCOUNT_EMAIL_REGISTERED_NO_PASSWORD
         );
         $this->assignRewardPoints($customer);
+
         return $this->customerModelFactory->create()->load($customer->getId());
     }
 
-    public function createSocialLoginCustomer($userProfile, $type, $customerId) {
+    public function createSocialLoginCustomer(array $userProfile, string $type, int|string $customerId): void
+    {
+        $now = (new \DateTime())->format('Y-m-d H:i:s');
         $socialNetworkCustomer = $this->socialNetworkCustomer->create();
-        $currentTimestamp = $this->dateTime->timestamp();
-
         $socialNetworkCustomer
             ->setSocialId($userProfile['identifier'])
             ->setCustomerId($customerId)
             ->setSocialType($type)
-            ->setCreatedAt($currentTimestamp)
-            ->setUpdatedAt($currentTimestamp);
+            ->setCreatedAt($now)
+            ->setUpdatedAt($now);
 
         $this->socialLoginCustomerRepository->save($socialNetworkCustomer);
     }
 
-    public function refresh($customer)
+    public function refresh(\Magento\Customer\Model\Customer $customer): void
     {
         if ($customer && $customer->getId()) {
             $this->session->setCustomerAsLoggedIn($customer);
             $this->session->regenerateId();
 
-            if ($this->getCookieManager()->getCookie('mage-cache-sessid')) {
-                $metadata = $this->getCookieMetadataFactory()->createCookieMetadata();
+            if ($this->cookieMetadataManager->getCookie('mage-cache-sessid')) {
+                $metadata = $this->cookieMetadataFactory->createCookieMetadata();
                 $metadata->setPath('/');
-                $this->getCookieManager()->deleteCookie('mage-cache-sessid', $metadata);
+                $this->cookieMetadataManager->deleteCookie('mage-cache-sessid', $metadata);
             }
         }
     }
 
-    /**
-     * Retrieve cookie manager
-     *
-     * @return     PhpCookieManager
-     * @deprecated
-     */
-    private function getCookieManager()
+    protected function assignRewardPoints(\Magento\Customer\Api\Data\CustomerInterface $customer): void
     {
-        if (!$this->cookieMetadataManager) {
-            $this->cookieMetadataManager = ObjectManager::getInstance()->get(
-                PhpCookieManager::class
-            );
-        }
-
-        return $this->cookieMetadataManager;
-    }
-
-    /**
-     * Retrieve cookie metadata factory
-     *
-     * @return     CookieMetadataFactory
-     * @deprecated
-     */
-    private function getCookieMetadataFactory()
-    {
-        if (!$this->cookieMetadataFactory) {
-            $this->cookieMetadataFactory = ObjectManager::getInstance()->get(
-                CookieMetadataFactory::class
-            );
-        }
-
-        return $this->cookieMetadataFactory;
-    }
-
-    protected function assignRewardPoints($customer) {
         if ($this->rewardData->isEnabledOnFront()) {
             try {
                 $subscribeByDefault = $this->rewardData->getNotificationConfig(
                     'subscribe_by_default',
                     $this->storeManager->getStore()->getWebsiteId()
                 );
-                $customerModel = $this->customerRegistry
-                ->retrieveByEmail($customer->getEmail());
+                $customerModel = $this->customerRegistry->retrieveByEmail($customer->getEmail());
                 $customerModel->setRewardUpdateNotification($subscribeByDefault);
                 $customerModel->setRewardWarningNotification($subscribeByDefault);
-                $customerModel->getResource()
-                    ->saveAttribute($customerModel, 'reward_update_notification');
-                $customerModel->getResource()
-                ->saveAttribute($customerModel, 'reward_warning_notification');
-
+                $customerModel->getResource()->saveAttribute($customerModel, 'reward_update_notification');
+                $customerModel->getResource()->saveAttribute($customerModel, 'reward_warning_notification');
 
                 $reward = $this->rewardFactory->create();
                 $reward
@@ -252,7 +173,6 @@ class Social extends \Magento\Framework\Model\AbstractModel
                     ->setAction(\Magento\Reward\Model\Reward::REWARD_ACTION_REGISTER)
                     ->updateRewardPoints();
             } catch (\Exception $e) {
-                // Handle exceptions if necessary
                 $this->_logger->critical($e);
             }
         }

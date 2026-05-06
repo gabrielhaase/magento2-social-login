@@ -3,22 +3,25 @@
     "description": "Magento 2 social login like Google, Facebook, Apple, Instagram, Twitter, Amazon, Yahoo, LinkedIn, and GitHub",
     "keywords": ["oauth", "openid", "authentication", "authorization", "social", "api", "google", "facebook", "twitter", "apple"],
     "type": "magento2-module",
-    "version": "1.0.4",
-	"license": "MIT",
+    "version": "1.1.0",
+    "license": "MIT",
     "authors": [
         {
-          "name": "TechYouKnow",
-          "role": "Owner"
+            "name": "TechYouKnow",
+            "role": "Owner"
         },
         {
             "name": "Amjad M",
             "role": "Developer"
         }
-      ],
+    ],
     "require": {
-        "php": ">=7.3",
+        "php": "^8.2",
+        "magento/framework": "^103.0",
+        "magento/module-customer": "*",
+        "magento/module-store": "*",
         "hybridauth/hybridauth": "~3.0",
-	"firebase/php-jwt": "~6.0"
+        "firebase/php-jwt": "^7.0"
     },
     "autoload": {
         "files": [

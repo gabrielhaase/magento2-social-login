@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,83 +26,78 @@
 
 namespace Techyouknow\SocialLogin\Model;
 
+use Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer as SocialNetworkCustomerInterface;
 
-class SocialLoginCustomer extends \Magento\Framework\Model\AbstractModel implements \Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer
+class SocialLoginCustomer extends \Magento\Framework\Model\AbstractModel implements SocialNetworkCustomerInterface
 {
-
-    protected function _construct() {
+    protected function _construct(): void
+    {
         $this->_init(\Techyouknow\SocialLogin\Model\ResourceModel\SocialLoginCustomer::class);
     }
 
-    public function getSocialId()
+    public function getEntityId(): mixed
     {
-        return $this->getData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::SOCIAL_ID);
+        return $this->getData(SocialNetworkCustomerInterface::ENTITY_ID);
     }
 
-    public function setSocialId($socialId)
+    public function setEntityId($entityId): static
     {
-        $this->setData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::SOCIAL_ID, $socialId);
-
+        $this->setData(SocialNetworkCustomerInterface::ENTITY_ID, $entityId);
         return $this;
     }
 
-    public function getCustomerId()
+    public function getSocialId(): mixed
     {
-        return $this->getData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::CUSTOMER_ID);
+        return $this->getData(SocialNetworkCustomerInterface::SOCIAL_ID);
     }
 
-    public function setCustomerId($customerId)
+    public function setSocialId($socialId): static
     {
-        $this->setData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::CUSTOMER_ID, $customerId);
-
+        $this->setData(SocialNetworkCustomerInterface::SOCIAL_ID, $socialId);
         return $this;
     }
 
-    public function getSocialType()
+    public function getCustomerId(): mixed
     {
-        return $this->getData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::SOCIAL_TYPE);
+        return $this->getData(SocialNetworkCustomerInterface::CUSTOMER_ID);
     }
 
-    public function setSocialType($socialType)
+    public function setCustomerId($customerId): static
     {
-        $this->setData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::SOCIAL_TYPE, $socialType);
-
+        $this->setData(SocialNetworkCustomerInterface::CUSTOMER_ID, $customerId);
         return $this;
     }
 
-    public function getCreatedAt()
+    public function getSocialType(): mixed
     {
-        return $this->getData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::CREATED_AT);
+        return $this->getData(SocialNetworkCustomerInterface::SOCIAL_TYPE);
     }
 
-    public function setCreatedAt($createdAt)
+    public function setSocialType($socialType): static
     {
-        $this->setData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::CREATED_AT, $createdAt);
-
+        $this->setData(SocialNetworkCustomerInterface::SOCIAL_TYPE, $socialType);
         return $this;
     }
 
-    public function getUpdatedAt()
+    public function getCreatedAt(): mixed
     {
-        return $this->getData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::UPDATED_AT);
+        return $this->getData(SocialNetworkCustomerInterface::CREATED_AT);
     }
 
-    public function setUpdatedAt($updatedAt)
+    public function setCreatedAt($createdAt): static
     {
-        $this->setData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::UPDATED_AT, $updatedAt);
-
+        $this->setData(SocialNetworkCustomerInterface::CREATED_AT, $createdAt);
         return $this;
     }
 
-    public function getEntityId()
+    public function getUpdatedAt(): mixed
     {
-        return $this->getData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::ENTITY_ID);
+        return $this->getData(SocialNetworkCustomerInterface::UPDATED_AT);
     }
 
-    public function setEntityId($entityId)
+    public function setUpdatedAt($updatedAt): static
     {
-        $this->setData(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer::UPDATED_AT, $entityId);
-
+        $this->setData(SocialNetworkCustomerInterface::UPDATED_AT, $updatedAt);
         return $this;
     }
 }

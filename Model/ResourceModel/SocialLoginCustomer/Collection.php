@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,15 +26,14 @@
 
 namespace Techyouknow\SocialLogin\Model\ResourceModel\SocialLoginCustomer;
 
+use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+use Techyouknow\SocialLogin\Model\SocialLoginCustomer;
+use Techyouknow\SocialLogin\Model\ResourceModel\SocialLoginCustomer as SocialLoginCustomerResource;
 
-class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection
+class Collection extends AbstractCollection
 {
-    protected function _construct()
+    protected function _construct(): void
     {
-        $this->_init(
-            \Techyouknow\SocialLogin\Model\SocialLoginCustomer::class,
-            \Techyouknow\SocialLogin\Model\ResourceModel\SocialLoginCustomer::class
-        );
+        $this->_init(SocialLoginCustomer::class, SocialLoginCustomerResource::class);
     }
-
 }

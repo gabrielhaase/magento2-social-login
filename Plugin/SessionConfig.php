@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,68 +26,47 @@
 
 namespace Techyouknow\SocialLogin\Plugin;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Session\Config as MagentoConfig;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class SessionConfig
 {
-    /**
-     * @var string[]
-     */
-    private $disableSessionUrls = [
+    private array $disableSessionUrls = [
         'apple.com',
-        'techyouknow_redirect/social/login'
+        'techyouknow_redirect/social/login',
     ];
 
-    /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
-
-    /**
-     * @var Http
-     */
-    private $request;
-
-
     public function __construct(
-        ScopeConfigInterface $scopeConfig,
-        Http $request
-    ) {
-        $this->scopeConfig = $scopeConfig;
-        $this->request = $request;
-    }
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly Http $request,
+    ) {}
 
-    public function aroundSetOption(MagentoConfig $subject, callable $proceed, $option, $value)
+    public function aroundSetOption(MagentoConfig $subject, callable $proceed, string $option, mixed $value): mixed
     {
         if ($this->isSocialNetworkEnable() && $this->isSecureAndSameSiteCookiesEnabled()) {
             foreach ($this->disableSessionUrls as $url) {
-                if (strpos((string)$this->request->getPathInfo(), $url) !== false) {
-                    switch ($option) {
-                        case 'session.cookie_secure':
-                            $value = 1;
-                            break;
-                        case 'session.cookie_samesite':
-                            $value = 'None';
-                            break;
+                if (str_contains((string) $this->request->getPathInfo(), $url)) {
+                    if ($option === 'session.cookie_secure') {
+                        $value = 1;
+                    } elseif ($option === 'session.cookie_samesite') {
+                        $value = 'None';
                     }
                     break;
                 }
             }
         }
 
-        // Call the original method
         return $proceed($option, $value);
     }
 
-    public function isSecureAndSameSiteCookiesEnabled()
+    private function isSecureAndSameSiteCookiesEnabled(): bool
     {
-        return $this->scopeConfig->getValue('techyouknow_social_network/adapters/apple/change_session');
+        return (bool) $this->scopeConfig->getValue('techyouknow_social_network/adapters/apple/change_session');
     }
 
-    public function isSocialNetworkEnable()
+    private function isSocialNetworkEnable(): bool
     {
-        return $this->scopeConfig->getValue('techyouknow_social_network/general/enable');
+        return (bool) $this->scopeConfig->getValue('techyouknow_social_network/general/enable');
     }
 }

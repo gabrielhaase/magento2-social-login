@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <!--
   ~ MIT License
   ~
@@ -24,11 +23,15 @@
   ~ SOFTWARE.
   -->
 
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
-    <module name="Techyouknow_SocialLogin">
-        <sequence>
-            <module name="Magento_Customer"/>
-            <module name="Magento_Store"/>
-        </sequence>
-    </module>
-</config>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <title>Complete Your Registration</title>
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <block class="Techyouknow\SocialLogin\Block\Social\CompleteRegistration"
+                   name="techyouknow_social_complete_registration"
+                   template="Techyouknow_SocialLogin::social/complete_registration.phtml"/>
+        </referenceContainer>
+    </body>
+</page>

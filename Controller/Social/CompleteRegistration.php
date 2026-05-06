@@ -24,34 +24,32 @@ declare(strict_types=1);
  * SOFTWARE.
  */
 
-namespace Techyouknow\SocialLogin\Block\System;
+namespace Techyouknow\SocialLogin\Controller\Social;
 
-use Magento\Backend\Block\Template\Context;
-use Magento\Config\Block\System\Config\Form\Field as FormField;
-use Magento\Framework\Data\Form\Element\AbstractElement;
-use Magento\Framework\Exception\LocalizedException;
-use Techyouknow\SocialLogin\Helper\Social as SocialHelper;
+use Magento\Customer\Model\Session;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\Controller\Result\RedirectFactory;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\View\Result\PageFactory;
 
-class RedirectUrl extends FormField
+class CompleteRegistration implements HttpGetActionInterface
 {
     public function __construct(
-        Context $context,
-        private readonly SocialHelper $socialHelper,
-        array $data = []
-    ) {
-        parent::__construct($context, $data);
-    }
+        private readonly PageFactory $resultPageFactory,
+        private readonly RedirectFactory $resultRedirectFactory,
+        private readonly Session $customerSession,
+    ) {}
 
-    protected function _getElementHtml(AbstractElement $element): string
+    public function execute(): ResultInterface
     {
-        $elementId   = explode('_', $element->getHtmlId());
-        $redirectUrl = $this->socialHelper->getSocialRedirectUrl($elementId[4]);
-        $escapedUrl  = htmlspecialchars($redirectUrl, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $escapedId   = htmlspecialchars($element->getHtmlId(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        if ($this->customerSession->isLoggedIn()) {
+            return $this->resultRedirectFactory->create()->setPath('customer/account');
+        }
 
-        return '<input style="opacity:1;" readonly id="' . $escapedId . '" '
-            . 'class="input-text admin__control-text" '
-            . 'value="' . $escapedUrl . '" '
-            . 'onclick="this.select()" type="text">';
+        if (!$this->customerSession->getData('social_login_pending_profile')) {
+            return $this->resultRedirectFactory->create()->setPath('customer/account/login');
+        }
+
+        return $this->resultPageFactory->create();
     }
 }

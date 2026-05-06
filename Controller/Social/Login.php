@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,118 +26,114 @@
 
 namespace Techyouknow\SocialLogin\Controller\Social;
 
-use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\CsrfAwareActionInterface;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\Session;
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\Action\HttpPostActionInterface;
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Controller\Result\Raw;
+use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Controller\Result\RedirectFactory;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\UrlInterface;
+use Magento\Framework\View\Result\PageFactory;
+use Psr\Log\LoggerInterface;
+use Techyouknow\SocialLogin\Api\SocialNetworkCustomerRepositoryInterface;
+use Techyouknow\SocialLogin\Helper\Social as SocialHelper;
+use Techyouknow\SocialLogin\Model\Social;
 
-class Login extends \Magento\Framework\App\Action\Action implements CsrfAwareActionInterface
+class Login implements HttpGetActionInterface, HttpPostActionInterface, CsrfAwareActionInterface
 {
-
-    private $resultRawFactory;
-    private $socialModel;
-    private $customerRepository;
-    private $customerModelFactory;
-    private $socialNetworkCustomerRepository;
-    private $customerSession;
-
     public function __construct(
-        Context $context,
-        \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
-        \Techyouknow\SocialLogin\Model\Social $socialModel,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
-        \Magento\Customer\Model\CustomerFactory $customerModelFactory,
-        \Techyouknow\SocialLogin\Api\SocialNetworkCustomerRepositoryInterface $socialNetworkCustomerRepository,
-        \Techyouknow\SocialLogin\Helper\Social $socialHelper,
-        Session $customerSession
-    )
-    {
-        parent::__construct($context);
-        $this->resultRawFactory = $resultRawFactory;
-        $this->socialModel = $socialModel;
-        $this->customerRepository = $customerRepository;
-        $this->customerModelFactory = $customerModelFactory;
-        $this->socialNetworkCustomerRepository = $socialNetworkCustomerRepository;
-        $this->socialHelper = $socialHelper;
-        $this->customerSession = $customerSession;
-    }
+        private readonly RequestInterface $request,
+        private readonly RawFactory $resultRawFactory,
+        private readonly RedirectFactory $resultRedirectFactory,
+        private readonly PageFactory $resultPageFactory,
+        private readonly Social $socialModel,
+        private readonly CustomerRepositoryInterface $customerRepository,
+        private readonly CustomerFactory $customerModelFactory,
+        private readonly SocialNetworkCustomerRepositoryInterface $socialNetworkCustomerRepository,
+        private readonly SocialHelper $socialHelper,
+        private readonly Session $customerSession,
+        private readonly LoggerInterface $logger,
+        private readonly UrlInterface $url,
+    ) {}
 
-    public function execute()
+    public function execute(): ResultInterface
     {
-        $adapterId = $this->getRequest()->getParam('provider');
+        $adapterId = (string) $this->request->getParam('provider');
+
         if ($this->customerSession->isLoggedIn() || !$this->checkAdapterIdActive($adapterId)) {
-            $this->_redirect($this->customerSession->isLoggedIn() ? 'customer/account' : '/');
-            return;
+            return $this->resultRedirectFactory->create()
+                ->setPath($this->customerSession->isLoggedIn() ? 'customer/account' : '/');
         }
+
         try {
             $userProfile = $this->socialModel->getSocialUserProfile($adapterId);
-            $customer = $this->customerRepository->get($userProfile['email']);
-            if(isset($customer) && $customer->getId()) {
-                // Get Customer Entity Model
+
+            try {
+                // Cliente existente: faz login normalmente
+                $customer      = $this->customerRepository->get($userProfile['email']);
                 $customerModel = $this->customerModelFactory->create()->load($customer->getId());
 
-                // Create new social network customer entity
-                if(!$this->socialNetworkCustomerRepository->socialNetworkCustomerExists($userProfile, $adapterId)) {
+                if (!$this->socialNetworkCustomerRepository->socialNetworkCustomerExists($userProfile, $adapterId)) {
                     $this->socialModel->createSocialLoginCustomer($userProfile, $adapterId, $customer->getId());
                 }
+
+                $this->socialModel->refresh($customerModel);
+
+                if ($adapterId === 'apple') {
+                    $page = $this->resultPageFactory->create();
+                    $page->addHandle('custom_script');
+                    return $page;
+                }
+
+                return $this->appendJs();
+
+            } catch (\Magento\Framework\Exception\NoSuchEntityException) {
+                // Novo cliente: guarda perfil na sessão e redireciona para completar cadastro
+                $this->customerSession->setData(
+                    'social_login_pending_profile',
+                    array_merge($userProfile, ['adapter_id' => $adapterId])
+                );
+
+                $completeUrl = $this->url->getUrl('techyouknow_redirect/social/completeregistration');
+
+                return $this->appendJs(
+                    'window.opener.location.href=' . json_encode($completeUrl) . ';window.close();'
+                );
             }
-        }
-        catch(\Magento\Framework\Exception\NoSuchEntityException $e) {
-            // Create new Customer account
-            $customerModel = $this->socialModel->createCustomerAccount($userProfile, $adapterId);
-        }
-        catch(\Exception $e){
-            exit("Error: " . $e->getMessage());
-        }
 
-        $this->socialModel->refresh($customerModel);
-
-        if($adapterId == 'apple') {
-            $this->_view->loadLayout(['custom_script']);
-            $this->_view->renderLayout();
-        } else {
-            return $this->_appendJs();
+        } catch (\Exception $e) {
+            $this->logger->critical('Social login error: ' . $e->getMessage(), ['exception' => $e]);
+            return $this->appendJs(
+                'window.opener.location.href=' . json_encode($this->url->getUrl('customer/account/login')) . ';window.close();'
+            );
         }
     }
 
-    /**
-     * @param null $content
-     * @return mixed
-     */
-    public function _appendJs($content = null)
+    private function appendJs(?string $content = null): Raw
     {
-        /** @var Raw $resultRaw */
-        $resultRaw = $this->resultRawFactory->create();
-
-        $raw = $resultRaw->setContents($content ?:
-            "<script>
-                    window.opener.location.reload(true);
-                    window.close();
-                </script>");
-
-        return $raw;
+        return $this->resultRawFactory->create()->setContents(
+            '<script>' . ($content ?? 'window.opener.location.reload(true);window.close();') . '</script>'
+        );
     }
 
-    public function checkAdapterIdActive($adapterId) {
-        $activeSocialNetworkList = $this->socialHelper->getActiveSocialNetworksList();
-        return array_key_exists($adapterId, $activeSocialNetworkList);
+    private function checkAdapterIdActive(string $adapterId): bool
+    {
+        return array_key_exists($adapterId, $this->socialHelper->getActiveSocialNetworksList());
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function createCsrfValidationException(
-        RequestInterface $request
-    ): ?InvalidRequestException {
-        return null; // Return null to use the default behavior
+    public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
+    {
+        return null;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function validateForCsrf(RequestInterface $request): ?bool
     {
-        return true; // Return true to indicate that CSRF validation is successful
+        return true;
     }
 }

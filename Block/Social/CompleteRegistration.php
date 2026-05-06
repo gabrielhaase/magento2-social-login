@@ -24,34 +24,28 @@ declare(strict_types=1);
  * SOFTWARE.
  */
 
-namespace Techyouknow\SocialLogin\Block\System;
+namespace Techyouknow\SocialLogin\Block\Social;
 
-use Magento\Backend\Block\Template\Context;
-use Magento\Config\Block\System\Config\Form\Field as FormField;
-use Magento\Framework\Data\Form\Element\AbstractElement;
-use Magento\Framework\Exception\LocalizedException;
-use Techyouknow\SocialLogin\Helper\Social as SocialHelper;
+use Magento\Customer\Model\Session;
+use Magento\Framework\View\Element\Template;
 
-class RedirectUrl extends FormField
+class CompleteRegistration extends Template
 {
     public function __construct(
-        Context $context,
-        private readonly SocialHelper $socialHelper,
+        Template\Context $context,
+        private readonly Session $customerSession,
         array $data = []
     ) {
         parent::__construct($context, $data);
     }
 
-    protected function _getElementHtml(AbstractElement $element): string
+    public function getPendingProfile(): array
     {
-        $elementId   = explode('_', $element->getHtmlId());
-        $redirectUrl = $this->socialHelper->getSocialRedirectUrl($elementId[4]);
-        $escapedUrl  = htmlspecialchars($redirectUrl, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $escapedId   = htmlspecialchars($element->getHtmlId(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return $this->customerSession->getData('social_login_pending_profile') ?? [];
+    }
 
-        return '<input style="opacity:1;" readonly id="' . $escapedId . '" '
-            . 'class="input-text admin__control-text" '
-            . 'value="' . $escapedUrl . '" '
-            . 'onclick="this.select()" type="text">';
+    public function getFormAction(): string
+    {
+        return $this->getUrl('techyouknow_redirect/social/saveregistration');
     }
 }

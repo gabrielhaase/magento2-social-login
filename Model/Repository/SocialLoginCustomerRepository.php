@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,56 +26,48 @@
 
 namespace Techyouknow\SocialLogin\Model\Repository;
 
+use Magento\Framework\Exception\NoSuchEntityException;
+use Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer;
+use Techyouknow\SocialLogin\Api\SocialNetworkCustomerRepositoryInterface;
+use Techyouknow\SocialLogin\Model\ResourceModel\SocialLoginCustomer\CollectionFactory;
+use Techyouknow\SocialLogin\Model\SocialLoginCustomerFactory;
 
-class SocialLoginCustomerRepository implements \Techyouknow\SocialLogin\Api\SocialNetworkCustomerRepositoryInterface
+class SocialLoginCustomerRepository implements SocialNetworkCustomerRepositoryInterface
 {
-
-
-    private $collectionFactory;
-    private $socialLoginCustomerFactory;
-
     public function __construct(
-        \Techyouknow\SocialLogin\Model\ResourceModel\SocialLoginCustomer\CollectionFactory $collectionFactory,
-        \Techyouknow\SocialLogin\Model\SocialLoginCustomerFactory $socialLoginCustomerFactory
-    )
-    {
+        private readonly CollectionFactory $collectionFactory,
+        private readonly SocialLoginCustomerFactory $socialLoginCustomerFactory,
+    ) {}
 
-        $this->collectionFactory = $collectionFactory;
-        $this->socialLoginCustomerFactory = $socialLoginCustomerFactory;
-    }
-
-    public function getById($id)
+    public function getById(int $id): SocialNetworkCustomer
     {
         $socialLoginCustomer = $this->socialLoginCustomerFactory->create();
         $socialLoginCustomer->getResource()->load($socialLoginCustomer, $id);
 
-        if(!$socialLoginCustomer->getId()) {
-            throw new \Magento\Framework\Exception\NoSuchEntityException(__("Unable to find Social Login Customer with ID %1", $id));
+        if (!$socialLoginCustomer->getId()) {
+            throw new NoSuchEntityException(__('Unable to find Social Login Customer with ID %1', $id));
         }
 
         return $socialLoginCustomer;
     }
 
-    public function socialNetworkCustomerExists($userProfile, $type)
+    public function socialNetworkCustomerExists(array $userProfile, string $type): int
     {
-        $collection = $this->collectionFactory->create()
+        return $this->collectionFactory->create()
             ->addFieldToFilter('social_id', $userProfile['identifier'])
-            ->addFieldToFilter('social_type', $type);
-
-        return $collection->count();
+            ->addFieldToFilter('social_type', $type)
+            ->count();
     }
 
-    public function save(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer $socialNetworkCustomer)
+    public function save(SocialNetworkCustomer $socialNetworkCustomer): SocialNetworkCustomer
     {
         $socialNetworkCustomer->getResource()->save($socialNetworkCustomer);
-
         return $socialNetworkCustomer;
     }
 
-    public function delete(\Techyouknow\SocialLogin\Api\Data\SocialNetworkCustomer $socialNetworkCustomer)
+    public function delete(SocialNetworkCustomer $socialNetworkCustomer): SocialNetworkCustomer
     {
         $socialNetworkCustomer->getResource()->delete($socialNetworkCustomer);
-
         return $socialNetworkCustomer;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /*
  * MIT License
  *
@@ -25,29 +26,26 @@
 
 namespace Techyouknow\SocialLogin\Block;
 
-
 use Magento\Framework\View\Element\Template;
+use Techyouknow\SocialLogin\Helper\Social as SocialHelper;
 
-class SocialBlock extends \Magento\Framework\View\Element\Template
+class SocialBlock extends Template
 {
-
-    private $socialHelper;
-
     public function __construct(
         Template\Context $context,
-        \Techyouknow\SocialLogin\Helper\Social $socialHelper,
+        private readonly SocialHelper $socialHelper,
         array $data = []
-    )
-    {
+    ) {
         parent::__construct($context, $data);
-        $this->socialHelper = $socialHelper;
     }
 
-    public function IsSocialLoginActive() {
+    public function isSocialLoginActive(): bool
+    {
         return $this->socialHelper->isSocialNetworkEnable();
     }
 
-    public function getEnabledSocialNetworks() {
+    public function getEnabledSocialNetworks(): array
+    {
         return $this->socialHelper->getActiveSocialNetworksList();
     }
 }
