@@ -1,0 +1,161 @@
+<?php
+/*
+ * MIT License
+ *
+ * Copyright (c) 2023 Techyouknow
+ */
+
+/** @var \Techyouknow\SocialLogin\Block\Social\CompleteRegistration $block */
+
+$profile   = $block->getPendingProfile();
+$firstname = $block->escapeHtmlAttr($profile['firstname'] ?? '');
+$lastname  = $block->escapeHtmlAttr($profile['lastname'] ?? '');
+$email     = $block->escapeHtmlAttr($profile['email'] ?? '');
+?>
+
+<div class="block block-social-complete-registration">
+    <div class="block-title">
+        <strong><?= $block->escapeHtml(__('Complete Your Registration')) ?></strong>
+    </div>
+    <div class="block-content">
+        <p class="social-registration-intro">
+            <?= $block->escapeHtml(__('We need a few more details to create your account.')) ?>
+        </p>
+
+        <form class="form social-complete-registration-form"
+              action="<?= $block->escapeUrl($block->getFormAction()) ?>"
+              method="post"
+              id="social-complete-registration-form"
+              x-data="cpfMaskForm()"
+              @submit="stripCpfMask">
+
+            <?= $block->getBlockHtml('formkey') ?>
+
+            <fieldset class="fieldset">
+
+                <div class="field field-name-firstname required">
+                    <label class="label" for="firstname">
+                        <span><?= $block->escapeHtml(__('First Name')) ?></span>
+                    </label>
+                    <div class="control">
+                        <input type="text"
+                               id="firstname"
+                               name="firstname"
+                               value="<?= $firstname ?>"
+                               class="input-text"
+                               required/>
+                    </div>
+                </div>
+
+                <div class="field field-name-lastname required">
+                    <label class="label" for="lastname">
+                        <span><?= $block->escapeHtml(__('Last Name')) ?></span>
+                    </label>
+                    <div class="control">
+                        <input type="text"
+                               id="lastname"
+                               name="lastname"
+                               value="<?= $lastname ?>"
+                               class="input-text"
+                               required/>
+                    </div>
+                </div>
+
+                <div class="field field-email">
+                    <label class="label" for="email">
+                        <span><?= $block->escapeHtml(__('Email')) ?></span>
+                    </label>
+                    <div class="control">
+                        <input type="email"
+                               id="email"
+                               name="email_display"
+                               value="<?= $email ?>"
+                               class="input-text"
+                               readonly
+                               disabled/>
+                    </div>
+                </div>
+
+                <div class="field field-taxvat required">
+                    <label class="label" for="taxvat">
+                        <span><?= $block->escapeHtml(__('CPF')) ?></span>
+                    </label>
+                    <div class="control">
+                        <input type="text"
+                               id="taxvat"
+                               name="taxvat"
+                               value=""
+                               class="input-text"
+                               placeholder="000.000.000-00"
+                               maxlength="14"
+                               required
+                               @input="formatCpf($event.target)"
+                               x-ref="taxvat"/>
+                    </div>
+                </div>
+
+                <div class="field field-password required">
+                    <label class="label" for="password">
+                        <span><?= $block->escapeHtml(__('Password')) ?></span>
+                    </label>
+                    <div class="control">
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               class="input-text"
+                               autocomplete="new-password"
+                               required/>
+                    </div>
+                </div>
+
+                <div class="field field-password-confirmation required">
+                    <label class="label" for="password_confirmation">
+                        <span><?= $block->escapeHtml(__('Confirm Password')) ?></span>
+                    </label>
+                    <div class="control">
+                        <input type="password"
+                               id="password_confirmation"
+                               name="password_confirmation"
+                               class="input-text"
+                               autocomplete="new-password"
+                               required/>
+                    </div>
+                </div>
+
+            </fieldset>
+
+            <div class="actions-toolbar">
+                <div class="primary">
+                    <button type="submit"
+                            class="action submit primary"
+                            title="<?= $block->escapeHtmlAttr(__('Create Account')) ?>">
+                        <span><?= $block->escapeHtml(__('Create Account')) ?></span>
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+function cpfMaskForm() {
+    return {
+        formatCpf(input) {
+            let raw = input.value.replace(/\D/g, '').slice(0, 11);
+            raw = raw
+                .replace(/^(\d{3})(\d)/, '$1.$2')
+                .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+                .replace(/\.(\d{3})(\d)/, '.$1-$2');
+            input.value = raw;
+        },
+        stripCpfMask() {
+            // Strip formatting so only digits reach the server; form submits normally after this.
+            const taxvat = this.$refs.taxvat;
+            if (taxvat) {
+                taxvat.value = taxvat.value.replace(/\D/g, '');
+            }
+        }
+    };
+}
+</script>

@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!--
+  ~ MIT License
+  ~
+  ~ Copyright (c) 2023 Techyouknow
+  -->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <remove src="Techyouknow_SocialLogin::css/styles.css"/>
+        <css src="Techyouknow_SocialLoginHyva::css/styles.css"/>
+    </head>
+    <body>
+        <referenceBlock name="techyouknow_social_complete_registration"
+                        template="Techyouknow_SocialLoginHyva::social/complete_registration.phtml"/>
+    </body>
+</page>

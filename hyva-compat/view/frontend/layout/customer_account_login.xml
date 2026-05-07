@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!--
+  ~ MIT License
+  ~
+  ~ Copyright (c) 2023 Techyouknow
+  -->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <remove src="Techyouknow_SocialLogin::css/styles.css"/>
+        <css src="Techyouknow_SocialLoginHyva::css/styles.css"/>
+    </head>
+    <body>
+        <!--
+            Override the template registered by the base module with the Hyva/Alpine.js version.
+
+            If the social login block is not rendering in the correct position, run:
+              bin/magento dev:layout:dump \-\-handle=customer_account_login
+            and check the Hyva-specific container hierarchy. You may need to add:
+              <move element="techyouknow_social_login" destination="customer.login.container" after="customer.login.form"/>
+        -->
+        <referenceBlock name="techyouknow_social_login"
+                        template="Techyouknow_SocialLoginHyva::form/social_login.phtml"/>
+    </body>
+</page>
