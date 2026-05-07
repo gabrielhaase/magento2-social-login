@@ -36,7 +36,6 @@ class Social extends \Magento\Framework\Model\AbstractModel
     protected EmailNotificationInterface $emailNotificationInterface;
     protected RewardFactory $rewardFactory;
     protected RewardData $rewardData;
-    protected \Psr\Log\LoggerInterface $_logger;
 
     public function __construct(
         \Magento\Framework\Model\Context $context,
